@@ -962,57 +962,75 @@ function startPolling(callId, callRecord) {
       }
 
       if (status === 'ended' || status === 'error') {
-        clearInterval(pollInterval);
         stopTimer();
         hideActiveCall();
         resetBtn();
 
-        // Update record with call data
-        const duration = data.end_timestamp && data.start_timestamp 
-          ? (data.end_timestamp - data.start_timestamp) / 1000 
-          : null;
-
         const analysis = data.call_analysis || {};
         const customData = analysis.custom_analysis_data || {};
 
-        // Map disposition
-        let disposition = 'unknown';
-        if (status === 'error') {
-          disposition = 'error';
-        } else if (data.disconnection_reason === 'voicemail_reached') {
-          disposition = 'voicemail';
-        } else if (data.disconnection_reason === 'no_answer' || data.disconnection_reason === 'dial_no_pickup') {
-          disposition = 'no-answer';
-        } else if (data.start_timestamp) {
-          disposition = 'answered';
-        }
+        // Check if analysis is ready — look for any populated custom field or summary
+        const analysisReady = analysis.call_summary || 
+          customData.eta || customData.ETA ||
+          customData.call_outcome || customData['Call Outcome'] ||
+          customData.trailer_number || customData['Trailer Number'] ||
+          customData.delivery_status || customData['Delivery Status'] ||
+          analysis.user_sentiment;
 
-        // Update the record
-        const idx = callHistory.findIndex(c => c.id === callId);
-        if (idx !== -1) {
-          callHistory[idx] = {
-            ...callHistory[idx],
-            analyzing: false,
-            status,
-            duration,
-            disposition,
-            eta: customData.eta || null,
-            trailerNumber: customData.trailer_number || null,
-            deliveryStatus: customData.delivery_status || null,
-            outcome: customData.call_outcome || null,
-            reasonNoInfo: customData.reason_no_info || null,
-            sentiment: analysis.user_sentiment || null,
-            summary: analysis.call_summary || null,
-            transcript: data.transcript || [],
-            error: status === 'error'
-          };
-          await saveHistory();
-          
-          // Re-render just this item
-          const oldItem = document.getElementById(`call-${callId}`);
-          const newItem = buildCallItem(callHistory[idx]);
-          newItem.classList.add('expanded');
-          if (oldItem) oldItem.replaceWith(newItem);
+        if (status === 'error' || analysisReady) {
+          clearInterval(pollInterval);
+
+          const duration = data.end_timestamp && data.start_timestamp 
+            ? (data.end_timestamp - data.start_timestamp) / 1000 
+            : null;
+
+          // Map disposition
+          let disposition = 'unknown';
+          if (status === 'error') {
+            disposition = 'error';
+          } else if (data.disconnection_reason === 'voicemail_reached') {
+            disposition = 'voicemail';
+          } else if (data.disconnection_reason === 'no_answer' || data.disconnection_reason === 'dial_no_pickup') {
+            disposition = 'no-answer';
+          } else if (data.start_timestamp) {
+            disposition = 'answered';
+          }
+
+          // Try both snake_case and Title Case field names from Retell
+          const eta = customData.eta || customData.ETA || customData['eta'] || null;
+          const trailerNumber = customData.trailer_number || customData['Trailer Number'] || customData['trailer_number'] || null;
+          const deliveryStatus = customData.delivery_status || customData['Delivery Status'] || customData['delivery_status'] || null;
+          const outcome = customData.call_outcome || customData['Call Outcome'] || customData['call_outcome'] || null;
+          const reasonNoInfo = customData.reason_no_info || customData['Reason'] || customData['reason'] || customData['reason_no_info'] || null;
+
+          const idx = callHistory.findIndex(c => c.id === callId);
+          if (idx !== -1) {
+            callHistory[idx] = {
+              ...callHistory[idx],
+              analyzing: false,
+              status,
+              duration,
+              disposition,
+              eta,
+              trailerNumber,
+              deliveryStatus,
+              outcome,
+              reasonNoInfo,
+              sentiment: analysis.user_sentiment || null,
+              summary: analysis.call_summary || null,
+              transcript: data.transcript || [],
+              error: status === 'error'
+            };
+            await saveHistory();
+            
+            const oldItem = document.getElementById(`call-${callId}`);
+            const newItem = buildCallItem(callHistory[idx]);
+            newItem.classList.add('expanded');
+            if (oldItem) oldItem.replaceWith(newItem);
+          }
+        } else {
+          // Call ended but analysis not ready yet — keep polling
+          document.getElementById('callStatusText') && (document.getElementById('callStatusText').textContent = 'Analyzing call...');
         }
       }
     } catch(e) {}
