@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JB Hunt — Check Call Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111318;
+    --surface2: #181c22;
+    --border: #1e2430;
+    --border2: #252d3a;
+    --accent: #e8372a;
+    --accent2: #ff5a4e;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --blue: #3b82f6;
+    --text: #e8eaf0;
+    --text2: #8892a0;
+    --text3: #4a5568;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(232,55,42,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,55,42,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+    letter-spacing: -0.5px;
+  }
+
+  .header-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .header-sub {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-top: 2px;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--green);
+    background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.2);
+    padding: 5px 10px;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Form Panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .panel-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 640px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text2);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .field input {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+
+  .field input:focus {
+    border-color: var(--accent);
+  }
+
+  .field input::placeholder {
+    color: var(--text3);
+    font-size: 13px;
+  }
+
+  .call-btn {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .call-btn:hover:not(:disabled) {
+    background: var(--accent2);
+  }
+
+  .call-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Active Call */
+  .active-call {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .active-call.visible { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .call-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: gap;
+    gap: 12px;
+  }
+
+  .call-status-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .call-indicator {
+    width: 10px;
+    height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: callPulse 1s infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes callPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232,55,42,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(232,55,42,0); }
+  }
+
+  .call-status-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .call-status-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  .call-timer {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  /* Call History */
+  .history-empty {
+    text-align: center;
+    padding: 48px 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  .call-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .call-item:hover { border-color: var(--border2); }
+  .call-item.expanded { border-color: var(--accent); }
+
+  .call-item-header {
+    padding: 14px 18px;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto auto;
+    align-items: center;
+    gap: 14px;
+  }
+
+  @media (max-width: 600px) {
+    .call-item-header {
+      grid-template-columns: auto 1fr auto;
+    }
+    .call-meta-duration, .call-meta-time { display: none; }
+  }
+
+  .outcome-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .outcome-dot.completed { background: var(--green); }
+  .outcome-dot.incomplete { background: var(--accent); }
+  .outcome-dot.no-answer { background: var(--yellow); }
+  .outcome-dot.voicemail { background: var(--blue); }
+  .outcome-dot.answered-no-info { background: var(--yellow); }
+  .outcome-dot.error { background: var(--text3); }
+  .outcome-dot.analyzing { background: var(--blue); animation: pulse 1s infinite; }
+
+  .call-meta-main {
+    min-width: 0;
+  }
+
+  .call-meta-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .call-meta-load {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  .call-meta-outcome {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 8px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .call-meta-outcome.completed { color: var(--green); border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.06); }
+  .call-meta-outcome.incomplete { color: var(--accent); border-color: rgba(232,55,42,0.3); background: rgba(232,55,42,0.06); }
+  .call-meta-outcome.no-answer { color: var(--yellow); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.06); }
+  .call-meta-outcome.voicemail { color: var(--blue); border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.06); }
+  .call-meta-outcome.answered-no-info { color: var(--yellow); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.06); }
+  .call-meta-outcome.error { color: var(--text2); border-color: var(--border2); }
+  .call-meta-outcome.analyzing { color: var(--blue); border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.06); }
+
+  .call-meta-duration {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    white-space: nowrap;
+  }
+
+  .call-meta-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+
+  /* Expanded detail */
+  .call-detail {
+    display: none;
+    border-top: 1px solid var(--border);
+    padding: 20px 18px;
+  }
+
+  .call-item.expanded .call-detail { display: block; }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .detail-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .detail-field {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+  }
+
+  .detail-field-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .detail-field-value {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .detail-field-value.highlight {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .detail-field-value.green { color: var(--green); }
+  .detail-field-value.yellow { color: var(--yellow); }
+  .detail-field-value.blue { color: var(--blue); }
+
+  .detail-section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    margin-top: 16px;
+  }
+
+  .detail-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.7;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 12px;
+  }
+
+  .transcript-toggle {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .transcript-toggle:hover { color: var(--accent2); }
+
+  .transcript-content {
+    display: none;
+    margin-top: 8px;
+  }
+
+  .transcript-content.visible { display: block; }
+
+  .transcript-line {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.8;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .transcript-line:last-child { border-bottom: none; }
+
+  .transcript-line .speaker {
+    color: var(--accent);
+    font-weight: 600;
+    margin-right: 8px;
+  }
+
+  .transcript-line .speech { color: var(--text2); }
+
+  .analyzing-spinner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--blue);
+    margin-top: 12px;
+  }
+
+  .spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(59,130,246,0.2);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-msg {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    background: rgba(232,55,42,0.06);
+    border: 1px solid rgba(232,55,42,0.2);
+    padding: 10px 12px;
+    margin-top: 12px;
+  }
+
+  /* Phone icon SVG */
+  .icon-phone { display: inline-block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-mark">JBH</div>
+      <div>
+        <div class="header-title">CHECK CALL AGENT</div>
+        <div class="header-sub">POC — Voice Automation Prototype</div>
+      </div>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      RETELL CONNECTED
+    </div>
+  </div>
+
+  <!-- Input Form -->
+  <div class="panel">
+    <div class="panel-label">Initiate Check Call</div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Driver First Name</label>
+        <input type="text" id="driverName" placeholder="e.g. John" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label>Load #</label>
+        <input type="text" id="loadNumber" placeholder="e.g. 8472910" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label>Phone Number</label>
+        <input type="tel" id="phoneNumber" placeholder="+1 (555) 000-0000" autocomplete="off" />
+      </div>
+    </div>
+    <button class="call-btn" id="callBtn" onclick="initiateCall()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.18 6.18l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+      INITIATE CALL
+    </button>
+    <div id="formError" class="error-msg" style="display:none;"></div>
+  </div>
+
+  <!-- Active Call Status -->
+  <div class="active-call" id="activeCall">
+    <div class="call-status-row">
+      <div class="call-status-info">
+        <div class="call-indicator" id="callIndicator"></div>
+        <div>
+          <div class="call-status-text" id="callStatusText">Connecting...</div>
+          <div class="call-status-sub" id="callStatusSub">Sarah from JB Hunt</div>
+        </div>
+      </div>
+      <div class="call-timer" id="callTimer">0:00</div>
+    </div>
+  </div>
+
+  <!-- Call History -->
+  <div class="panel-label" style="margin-bottom:12px;">Call History</div>
+  <div id="callHistory">
+    <div class="history-empty" id="emptyState">No calls yet — initiate a call above to begin testing</div>
+  </div>
+
+</div>
+
+<script>
+const RETELL_API_KEY = 'key_5b0a542fac9f11e2eab1c07b194c';
+const AGENT_ID = 'agent_71935955de8dcb5c5f5aeb231a';
+const FROM_NUMBER = '+14794806348';
+const STORAGE_KEY = 'jbh_checkcall_history';
+
+let activeCallId = null;
+let timerInterval = null;
+let pollInterval = null;
+let callStartTime = null;
+let callHistory = [];
+
+// Load history from storage
+async function loadHistory() {
+  try {
+    const result = await window.storage.get(STORAGE_KEY);
+    if (result && result.value) {
+      callHistory = JSON.parse(result.value);
+      renderHistory();
+    }
+  } catch(e) {
+    callHistory = [];
+  }
+}
+
+async function saveHistory() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(callHistory));
+  } catch(e) {}
+}
+
+function formatPhone(input) {
+  let digits = input.replace(/\D/g, '');
+  if (!digits.startsWith('1') && digits.length === 10) digits = '1' + digits;
+  return '+' + digits;
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+function formatTimestamp(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' · ' + d.toLocaleDateString([], {month:'short', day:'numeric'});
+}
+
+function getOutcomeClass(outcome) {
+  if (!outcome) return 'analyzing';
+  const o = outcome.toLowerCase().replace(/\s+/g,'-').replace(/_/g,'-');
+  if (o.includes('complet') && !o.includes('in')) return 'completed';
+  if (o.includes('incomplet')) return 'incomplete';
+  if (o.includes('no-answer') || o.includes('no_answer') || o.includes('no answer')) return 'no-answer';
+  if (o.includes('voicemail')) return 'voicemail';
+  if (o.includes('no-info') || o.includes('no_info') || o.includes('no info')) return 'answered-no-info';
+  if (o.includes('error') || o.includes('fail')) return 'error';
+  return 'analyzing';
+}
+
+function getOutcomeLabel(call) {
+  if (call.analyzing) return 'ANALYZING...';
+  if (call.error) return 'ERROR';
+  const disp = call.disposition;
+  if (disp === 'no-answer' || disp === 'no_answer') return 'NO ANSWER';
+  if (disp === 'voicemail') return 'VOICEMAIL';
+  if (call.outcome) return call.outcome.toUpperCase().replace(/_/g,' ');
+  return call.status ? call.status.toUpperCase() : 'UNKNOWN';
+}
+
+function getOutcomeClassFromCall(call) {
+  if (call.analyzing) return 'analyzing';
+  if (call.error) return 'error';
+  if (call.disposition === 'no-answer' || call.disposition === 'no_answer') return 'no-answer';
+  if (call.disposition === 'voicemail') return 'voicemail';
+  return getOutcomeClass(call.outcome || '');
+}
+
+function renderHistory() {
+  const container = document.getElementById('callHistory');
+  const empty = document.getElementById('emptyState');
+  
+  if (callHistory.length === 0) {
+    if (empty) empty.style.display = 'block';
+    // Remove all call items
+    container.querySelectorAll('.call-item').forEach(el => el.remove());
+    return;
+  }
+  
+  if (empty) empty.style.display = 'none';
+
+  // Re-render all
+  container.querySelectorAll('.call-item').forEach(el => el.remove());
+
+  [...callHistory].reverse().forEach(call => {
+    const item = buildCallItem(call);
+    container.appendChild(item);
+  });
+}
+
+function buildCallItem(call) {
+  const outcomeClass = getOutcomeClassFromCall(call);
+  const outcomeLabel = getOutcomeLabel(call);
+  const duration = call.duration ? formatTime(Math.round(call.duration)) : (call.analyzing ? '—' : '—');
+  const ts = formatTimestamp(call.timestamp);
+
+  const div = document.createElement('div');
+  div.className = 'call-item';
+  div.id = `call-${call.id}`;
+
+  // Transcript HTML
+  let transcriptHTML = '';
+  if (call.transcript && call.transcript.length > 0) {
+    const lines = call.transcript.map(t => 
+      `<div class="transcript-line"><span class="speaker">${t.role === 'agent' ? 'SARAH' : 'DRIVER'}:</span><span class="speech">${t.content || ''}</span></div>`
+    ).join('');
+    transcriptHTML = `
+      <button class="transcript-toggle" onclick="toggleTranscript('${call.id}', event)">▶ VIEW TRANSCRIPT</button>
+      <div class="transcript-content" id="transcript-${call.id}">
+        <div class="detail-text" style="padding:0;">${lines}</div>
+      </div>`;
+  }
+
+  const analysisSpinner = call.analyzing ? `<div class="analyzing-spinner"><div class="spinner"></div> Analyzing call...</div>` : '';
+
+  div.innerHTML = `
+    <div class="call-item-header" onclick="toggleExpand('${call.id}')">
+      <div class="outcome-dot ${outcomeClass}"></div>
+      <div class="call-meta-main">
+        <div class="call-meta-name">${call.driverName || 'Driver'}</div>
+        <div class="call-meta-load">Load #${call.loadNumber || '—'} · ${call.phone || ''}</div>
+      </div>
+      <div class="call-meta-outcome ${outcomeClass}">${outcomeLabel}</div>
+      <div class="call-meta-duration">${duration}</div>
+      <div class="call-meta-time">${ts}</div>
+    </div>
+    <div class="call-detail">
+      <div class="detail-grid">
+        <div class="detail-field">
+          <div class="detail-field-label">ETA</div>
+          <div class="detail-field-value highlight">${call.eta || '—'}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Trailer #</div>
+          <div class="detail-field-value">${call.trailerNumber || '—'}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Delivery Status</div>
+          <div class="detail-field-value">${call.deliveryStatus || '—'}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Call Outcome</div>
+          <div class="detail-field-value ${outcomeClass === 'completed' ? 'green' : outcomeClass === 'no-answer' || outcomeClass === 'answered-no-info' ? 'yellow' : ''}">${call.outcome || '—'}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Disposition</div>
+          <div class="detail-field-value">${call.disposition || '—'}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Reason (if no info)</div>
+          <div class="detail-field-value">${call.reasonNoInfo || '—'}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Duration</div>
+          <div class="detail-field-value">${duration}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Sentiment</div>
+          <div class="detail-field-value">${call.sentiment || '—'}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Call ID</div>
+          <div class="detail-field-value" style="font-size:10px;color:var(--text3)">${call.callId || '—'}</div>
+        </div>
+      </div>
+      ${call.summary ? `<div class="detail-section-label">Summary</div><div class="detail-text">${call.summary}</div>` : ''}
+      ${transcriptHTML}
+      ${analysisSpinner}
+    </div>`;
+  
+  return div;
+}
+
+function toggleExpand(id) {
+  const item = document.getElementById(`call-${id}`);
+  if (item) item.classList.toggle('expanded');
+}
+
+function toggleTranscript(id, e) {
+  e.stopPropagation();
+  const tc = document.getElementById(`transcript-${id}`);
+  const btn = e.target;
+  if (tc.classList.toggle('visible')) {
+    btn.textContent = '▼ HIDE TRANSCRIPT';
+  } else {
+    btn.textContent = '▶ VIEW TRANSCRIPT';
+  }
+}
+
+async function initiateCall() {
+  const driverName = document.getElementById('driverName').value.trim();
+  const loadNumber = document.getElementById('loadNumber').value.trim();
+  const phoneRaw = document.getElementById('phoneNumber').value.trim();
+  const errorEl = document.getElementById('formError');
+
+  errorEl.style.display = 'none';
+
+  if (!driverName || !loadNumber || !phoneRaw) {
+    errorEl.textContent = 'Please fill in all fields before initiating a call.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  const phone = formatPhone(phoneRaw);
+  if (phone.length < 10) {
+    errorEl.textContent = 'Please enter a valid phone number.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('callBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="border-color:rgba(255,255,255,0.2);border-top-color:white;"></div> CONNECTING...';
+
+  try {
+    const response = await fetch('https://api.retellai.com/v2/create-phone-call', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RETELL_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from_number: FROM_NUMBER,
+        to_number: phone,
+        override_agent_id: AGENT_ID,
+        retell_llm_dynamic_variables: {
+          load_number: loadNumber,
+          driver_name: driverName
+        },
+        metadata: {
+          driver_name: driverName,
+          load_number: loadNumber
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.message || `API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    activeCallId = data.call_id;
+    callStartTime = Date.now();
+
+    // Add to history immediately
+    const callRecord = {
+      id: activeCallId,
+      callId: activeCallId,
+      driverName,
+      loadNumber,
+      phone,
+      timestamp: Date.now(),
+      analyzing: true,
+      status: 'ongoing'
+    };
+    callHistory.push(callRecord);
+    await saveHistory();
+    renderHistory();
+
+    // Expand the new item
+    setTimeout(() => {
+      const item = document.getElementById(`call-${activeCallId}`);
+      if (item) item.classList.add('expanded');
+    }, 100);
+
+    showActiveCall(driverName, loadNumber);
+    startTimer();
+    startPolling(activeCallId, callRecord);
+
+  } catch(err) {
+    errorEl.textContent = `Failed to initiate call: ${err.message}`;
+    errorEl.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.18 6.18l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg> INITIATE CALL';
+  }
+}
+
+function showActiveCall(name, load) {
+  const el = document.getElementById('activeCall');
+  document.getElementById('callStatusText').textContent = `Calling ${name} — Load #${load}`;
+  document.getElementById('callStatusSub').textContent = 'Sarah from JB Hunt is on the line';
+  el.classList.add('visible');
+}
+
+function hideActiveCall() {
+  document.getElementById('activeCall').classList.remove('visible');
+}
+
+function startTimer() {
+  let elapsed = 0;
+  timerInterval = setInterval(() => {
+    elapsed++;
+    document.getElementById('callTimer').textContent = formatTime(elapsed);
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+function startPolling(callId, callRecord) {
+  let attempts = 0;
+  const maxAttempts = 120; // 10 min max
+
+  pollInterval = setInterval(async () => {
+    attempts++;
+    if (attempts > maxAttempts) {
+      clearInterval(pollInterval);
+      stopTimer();
+      hideActiveCall();
+      resetBtn();
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://api.retellai.com/v2/get-call/${callId}`, {
+        headers: { 'Authorization': `Bearer ${RETELL_API_KEY}` }
+      });
+
+      if (!res.ok) return;
+      const data = await res.json();
+      const status = data.call_status;
+
+      // Update status text
+      if (status === 'registered') {
+        document.getElementById('callStatusText').textContent = `Ringing ${callRecord.driverName}...`;
+      } else if (status === 'ongoing') {
+        document.getElementById('callStatusText').textContent = `In Progress — Load #${callRecord.loadNumber}`;
+      }
+
+      if (status === 'ended' || status === 'error') {
+        clearInterval(pollInterval);
+        stopTimer();
+        hideActiveCall();
+        resetBtn();
+
+        // Update record with call data
+        const duration = data.end_timestamp && data.start_timestamp 
+          ? (data.end_timestamp - data.start_timestamp) / 1000 
+          : null;
+
+        const analysis = data.call_analysis || {};
+        const customData = analysis.custom_analysis_data || {};
+
+        // Map disposition
+        let disposition = 'unknown';
+        if (status === 'error') {
+          disposition = 'error';
+        } else if (data.disconnection_reason === 'voicemail_reached') {
+          disposition = 'voicemail';
+        } else if (data.disconnection_reason === 'no_answer' || data.disconnection_reason === 'dial_no_pickup') {
+          disposition = 'no-answer';
+        } else if (data.start_timestamp) {
+          disposition = 'answered';
+        }
+
+        // Update the record
+        const idx = callHistory.findIndex(c => c.id === callId);
+        if (idx !== -1) {
+          callHistory[idx] = {
+            ...callHistory[idx],
+            analyzing: false,
+            status,
+            duration,
+            disposition,
+            eta: customData.eta || null,
+            trailerNumber: customData.trailer_number || null,
+            deliveryStatus: customData.delivery_status || null,
+            outcome: customData.call_outcome || null,
+            reasonNoInfo: customData.reason_no_info || null,
+            sentiment: analysis.user_sentiment || null,
+            summary: analysis.call_summary || null,
+            transcript: data.transcript || [],
+            error: status === 'error'
+          };
+          await saveHistory();
+          
+          // Re-render just this item
+          const oldItem = document.getElementById(`call-${callId}`);
+          const newItem = buildCallItem(callHistory[idx]);
+          newItem.classList.add('expanded');
+          if (oldItem) oldItem.replaceWith(newItem);
+        }
+      }
+    } catch(e) {}
+  }, 5000);
+}
+
+function resetBtn() {
+  const btn = document.getElementById('callBtn');
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.18 6.18l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg> INITIATE CALL';
+}
+
+// Init
+loadHistory();
+</script>
+</body>
+</html>
