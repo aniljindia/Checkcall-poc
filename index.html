@@ -741,9 +741,10 @@ function buildCallItem(call) {
   div.id = `call-${call.id}`;
 
   // Transcript HTML
-  let transcriptHTML = '';
-  if (call.transcript && call.transcript.length > 0) {
-    const lines = call.transcript.map(t => 
+    let transcriptHTML = '';
+    const transcript = Array.isArray(call.transcript) ? call.transcript : [];
+    if (transcript.length > 0) {
+    const lines = transcript.map(t =>
       `<div class="transcript-line"><span class="speaker">${t.role === 'agent' ? 'SARAH' : 'DRIVER'}:</span><span class="speech">${t.content || ''}</span></div>`
     ).join('');
     transcriptHTML = `
