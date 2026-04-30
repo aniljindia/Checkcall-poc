@@ -982,6 +982,7 @@ function startPolling(callId, callRecord) {
           customData['Call Outcome'] || customData.call_outcome;
 
         if (status === 'error' || analysisReady) {
+          console.log('[POLL] Analysis ready — updating UI', {eta: customData['ETA'], trailer: customData['Trailer Number'], outcome: customData['Call Outcome']});
           clearInterval(pollInterval);
           hideActiveCall();
 
@@ -1038,7 +1039,7 @@ function startPolling(callId, callRecord) {
           document.getElementById('callStatusText') && (document.getElementById('callStatusText').textContent = 'Analyzing call...');
         }
       }
-    } catch(e) {}
+    } catch(e) { console.error('[POLL ERROR]', e); }
   }, 5000);
 }
 
