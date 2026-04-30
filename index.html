@@ -953,6 +953,7 @@ function startPolling(callId, callRecord) {
       if (!res.ok) return;
       const data = await res.json();
       const status = data.call_status;
+      console.log('[POLL]', 'attempt:', attempts, 'status:', status, 'has_analysis:', !!data.call_analysis, 'summary:', !!(data.call_analysis && data.call_analysis.call_summary), 'custom:', JSON.stringify(data.call_analysis && data.call_analysis.custom_analysis_data));
 
       // Update status text
       if (status === 'registered') {
@@ -963,22 +964,26 @@ function startPolling(callId, callRecord) {
 
       if (status === 'ended' || status === 'error') {
         stopTimer();
-        hideActiveCall();
         resetBtn();
+        // Keep active call banner visible while analyzing
+        document.getElementById('callStatusText').textContent = 'Analyzing call...';
+        document.getElementById('callStatusSub').textContent = 'Extracting ETA, trailer number and outcome';
 
         const analysis = data.call_analysis || {};
         const customData = analysis.custom_analysis_data || {};
 
-        // Check if analysis is ready — look for any populated custom field or summary
+        // Analysis is ready when summary OR at least one custom field is populated
+        // Do NOT use call_successful/in_voicemail as they appear before analysis is done
         const analysisReady = analysis.call_summary || 
-          customData.eta || customData.ETA ||
-          customData.call_outcome || customData['Call Outcome'] ||
-          customData.trailer_number || customData['Trailer Number'] ||
-          customData.delivery_status || customData['Delivery Status'] ||
-          analysis.user_sentiment;
+          analysis.user_sentiment ||
+          customData['ETA'] || customData.eta ||
+          customData['Trailer Number'] || customData.trailer_number ||
+          customData['Delivery Status'] || customData.delivery_status ||
+          customData['Call Outcome'] || customData.call_outcome;
 
         if (status === 'error' || analysisReady) {
           clearInterval(pollInterval);
+          hideActiveCall();
 
           const duration = data.end_timestamp && data.start_timestamp 
             ? (data.end_timestamp - data.start_timestamp) / 1000 
