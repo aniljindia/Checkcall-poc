@@ -635,6 +635,12 @@ let callHistory = [];
 // Load history from storage
 async function loadHistory() {
   try {
+    // Try localStorage first (GitHub Pages)
+    const local = localStorage.getItem(STORAGE_KEY);
+    if (local) { callHistory = JSON.parse(local); renderHistory(); return; }
+  } catch(e) {}
+  try {
+    // Fallback to artifact storage
     const result = await window.storage.get(STORAGE_KEY);
     if (result && result.value) {
       callHistory = JSON.parse(result.value);
@@ -646,6 +652,9 @@ async function loadHistory() {
 }
 
 async function saveHistory() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(callHistory));
+  } catch(e) {}
   try {
     await window.storage.set(STORAGE_KEY, JSON.stringify(callHistory));
   } catch(e) {}
@@ -724,6 +733,7 @@ function buildCallItem(call) {
   const outcomeClass = getOutcomeClassFromCall(call);
   const outcomeLabel = getOutcomeLabel(call);
   const duration = call.duration ? formatTime(Math.round(call.duration)) : (call.analyzing ? '—' : '—');
+  const cost = call.duration ? '$' + ((call.duration / 60) * 0.11).toFixed(3) : '—';
   const ts = formatTimestamp(call.timestamp);
 
   const div = document.createElement('div');
@@ -753,7 +763,8 @@ function buildCallItem(call) {
         <div class="call-meta-load">Load #${call.loadNumber || '—'} · ${call.phone || ''}</div>
       </div>
       <div class="call-meta-outcome ${outcomeClass}">${outcomeLabel}</div>
-      <div class="call-meta-duration">${duration}</div>
+      <div class="call-meta-duration">${call.eta ? call.eta : duration}</div>
+      <div class="call-meta-duration">${cost}</div>
       <div class="call-meta-time">${ts}</div>
     </div>
     <div class="call-detail">
@@ -791,11 +802,16 @@ function buildCallItem(call) {
           <div class="detail-field-value">${call.sentiment || '—'}</div>
         </div>
         <div class="detail-field">
+          <div class="detail-field-label">Est. Cost</div>
+          <div class="detail-field-value">${cost}</div>
+        </div>
+        <div class="detail-field">
           <div class="detail-field-label">Call ID</div>
           <div class="detail-field-value" style="font-size:10px;color:var(--text3)">${call.callId || '—'}</div>
         </div>
       </div>
       ${call.summary ? `<div class="detail-section-label">Summary</div><div class="detail-text">${call.summary}</div>` : ''}
+      ${call.recordingUrl ? `<div class="detail-section-label">Recording</div><a href="${call.recordingUrl}" target="_blank" style="font-family:var(--mono);font-size:12px;color:var(--accent);text-decoration:none;background:var(--bg);border:1px solid var(--border);padding:8px 12px;display:inline-block;margin-bottom:8px;">▶ PLAY RECORDING</a>` : ''}
       ${transcriptHTML}
       ${analysisSpinner}
     </div>`;
@@ -953,7 +969,7 @@ function startPolling(callId, callRecord) {
       if (!res.ok) return;
       const data = await res.json();
       const status = data.call_status;
-      console.log('[POLL]', 'attempt:', attempts, 'status:', status, 'has_analysis:', !!data.call_analysis, 'summary:', !!(data.call_analysis && data.call_analysis.call_summary), 'custom:', JSON.stringify(data.call_analysis && data.call_analysis.custom_analysis_data));
+      console.log('[POLL]', 'attempt:', attempts, 'status:', status, 'has_analysis:', !!data.call_analysis, 'summary:', !!(data.call_analysis && data.call_analysis.call_summary), 'cost:', data.cost || data.total_cost || data.billing, 'custom:', JSON.stringify(data.call_analysis && data.call_analysis.custom_analysis_data));
 
       // Update status text
       if (status === 'registered') {
@@ -1025,14 +1041,17 @@ function startPolling(callId, callRecord) {
               sentiment: analysis.user_sentiment || null,
               summary: analysis.call_summary || null,
               transcript: data.transcript || [],
+              recordingUrl: data.recording_url || null,
               error: status === 'error'
             };
             await saveHistory();
-            
-            const oldItem = document.getElementById(`call-${callId}`);
-            const newItem = buildCallItem(callHistory[idx]);
-            newItem.classList.add('expanded');
-            if (oldItem) oldItem.replaceWith(newItem);
+            console.log('[UPDATE] Rendering history with fields:', {eta, trailerNumber, outcome});
+            renderHistory();
+            // Re-expand the updated item
+            setTimeout(() => {
+              const item = document.getElementById(`call-${callId}`);
+              if (item) item.classList.add('expanded');
+            }, 50);
           }
         } else {
           // Call ended but analysis not ready yet — keep polling
