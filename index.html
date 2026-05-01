@@ -1031,7 +1031,8 @@ function startPolling(callId, callRecord) {
           }
 
           // Try both snake_case and Title Case field names from Retell
-          const eta = customData.eta || customData.ETA || customData['eta'] || null;
+          const rawEta = customData.eta || customData.ETA || customData['eta'] || null;
+          const eta = rawEta ? resolveETA(rawEta, callHistory.find(c => c.id === callId)?.timestamp || Date.now()) : null;
           const arrivalTime = customData['Arrival Time'] || customData.arrival_time || null;
           const trailerNumber = customData.trailer_number || customData['Trailer Number'] || customData['trailer_number'] || null;
           const rawDelivery = customData.delivery_status || customData['Delivery Status'] || customData['delivery_status'] || null;
@@ -1081,6 +1082,47 @@ function resetBtn() {
   const btn = document.getElementById('callBtn');
   btn.disabled = false;
   btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.18 6.18l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg> INITIATE CALL';
+}
+
+
+// Convert relative ETA to clock time
+function resolveETA(etaString, callTimestamp) {
+  if (!etaString) return null;
+  const lower = etaString.toLowerCase().trim();
+  const base = new Date(callTimestamp);
+
+  // Already a clock time like 11:00 AM — return as is
+  if (/\d{1,2}:\d{2}/.test(lower)) return etaString;
+
+  // Match "2 hours", "40 minutes", "1.5 hours" etc
+  const match = lower.match(/(\d+(?:\.\d+)?)\s*(hour|hr|minute|min)/);
+  if (match) {
+    const value = parseFloat(match[1]);
+    const unit = match[2];
+    if (unit.startsWith('hour') || unit.startsWith('hr')) {
+      base.setMinutes(base.getMinutes() + Math.round(value * 60));
+    } else {
+      base.setMinutes(base.getMinutes() + Math.round(value));
+    }
+    return base.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+  }
+
+  // Handle natural phrases
+  if (lower.includes('half') && lower.includes('hour')) {
+    base.setMinutes(base.getMinutes() + 30);
+    return base.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+  }
+  if (lower.includes('an hour') || lower.includes('one hour')) {
+    base.setHours(base.getHours() + 1);
+    return base.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+  }
+  if (lower.includes('couple') || lower.includes('two hour')) {
+    base.setHours(base.getHours() + 2);
+    return base.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+  }
+
+  // Cannot parse — return original
+  return etaString;
 }
 
 // Init
