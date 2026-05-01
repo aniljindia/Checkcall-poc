@@ -768,7 +768,7 @@ function buildCallItem(call) {
         <div class="call-meta-load">Load #${call.loadNumber || '—'} · ${call.destination ? call.destination + ' · ' : ''}${call.phone || ''}</div>
       </div>
       <div class="call-meta-outcome ${outcomeClass}">${outcomeLabel}</div>
-      <div class="call-meta-duration">${call.eta ? call.eta : duration}</div>
+      <div class="call-meta-duration">${call.eta || call.arrivalTime || duration}</div>
       <div class="call-meta-duration">${cost}</div>
       <div class="call-meta-time">${ts}</div>
     </div>
@@ -777,6 +777,10 @@ function buildCallItem(call) {
         <div class="detail-field">
           <div class="detail-field-label">ETA</div>
           <div class="detail-field-value highlight">${call.eta || '—'}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Arrival Time</div>
+          <div class="detail-field-value highlight">${call.arrivalTime || '—'}</div>
         </div>
         <div class="detail-field">
           <div class="detail-field-label">Trailer #</div>
@@ -1028,6 +1032,7 @@ function startPolling(callId, callRecord) {
 
           // Try both snake_case and Title Case field names from Retell
           const eta = customData.eta || customData.ETA || customData['eta'] || null;
+          const arrivalTime = customData['Arrival Time'] || customData.arrival_time || null;
           const trailerNumber = customData.trailer_number || customData['Trailer Number'] || customData['trailer_number'] || null;
           const rawDelivery = customData.delivery_status || customData['Delivery Status'] || customData['delivery_status'] || null;
           const deliveryStatus = rawDelivery === true ? 'delivered' : rawDelivery === false ? 'not_delivered' : rawDelivery;
@@ -1043,6 +1048,7 @@ function startPolling(callId, callRecord) {
               duration,
               disposition,
               eta,
+              arrivalTime,
               trailerNumber,
               deliveryStatus,
               outcome,
